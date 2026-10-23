@@ -13,6 +13,7 @@ gitGraph
     commit id: "init-project-map" tag: "v0.1.0"
     commit id: "feat-solar-lunar-core" tag: "v1.0.0"
     commit id: "feat-desktop-shortcuts-and-icon" tag: "v1.1.0"
+    commit id: "fix-auto-detection-and-iana-timezone" tag: "v1.1.1"
 ```
 
 ---
@@ -24,9 +25,10 @@ gitGraph
 | `CHK-001` | 2026-10-23 | `v0.1.0` | Inicialización del repositorio git y mapa del proyecto | ✅ Completado |
 | `CHK-002` | 2026-10-23 | `v1.0.0` | Aplicación interactiva completa (`index.html`) con Reloj Solar Local Verdadero, simulador de bóveda celeste, Calendario de 13 meses de 28 días perpetuo, calculador lunar astronómico, guía de fases biológicas y scripts desacoplados POSIX `start.sh`/`stop.sh` en puerto asignado `5195` | ✅ Completado |
 | `CHK-003` | 2026-10-23 | `v1.1.0` | Creación de lanzadores en el Escritorio: aplicación nativa compilada macOS `Solarium.app` con icono personalizado de sol y luna dorada/plateada (`.icns`), lanzador por terminal `Solarium.command` y script desacoplado `launch-desktop.sh` | ✅ Completado |
+| `CHK-004` | 2026-10-23 | `v1.1.1` | Corrección integral del motor de detección: resolución de syntax error en el cierre del script, integración de base de datos de zonas horarias IANA con auto-detección instantánea (0 ms, 100% offline, detectando automáticamente Mérida / Yucatán `America/Merida`), barra visual de ubicación activa con indicador de pulso en vivo, refinamiento por IP en segundo plano, soporte para Secure Context en `launch-desktop.sh` vía `http://127.0.0.1:5195` y manejo defensivo del botón GPS | ✅ Completado |
 
 ---
 
 ## 🚦 Estado de la Sesión
-- **Estado Actual:** Servidor local activo en puerto 5195 (`HTTP 200 OK`) y aplicación verificada al 100%. Accesos directos creados en el Escritorio de macOS.
-- **Siguiente paso:** Entrega al usuario con documentación técnica y enlaces clicables.
+- **Estado Actual:** Solarium 100% operativo en `http://127.0.0.1:5195` y mediante `Solarium.app`. Detección verificada empíricamente en Mérida, Yucatán (UTC-6).
+- **Siguiente paso:** Notificación al usuario con explicación de la causa raíz y verificación.

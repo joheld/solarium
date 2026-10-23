@@ -202,6 +202,51 @@
       fill: none;
     }
 
+    /* BARRA DE UBICACIÓN ACTIVA */
+    .active-location-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: rgba(245, 158, 11, 0.08);
+      border: 1px solid var(--border-gold);
+      border-radius: 14px;
+      padding: 0.65rem 1.15rem;
+      margin-top: -0.75rem;
+      font-size: 0.85rem;
+      flex-wrap: wrap;
+      gap: 0.6rem;
+    }
+
+    .loc-indicator-pill {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      font-weight: 700;
+      color: var(--solar-gold);
+    }
+
+    .live-pulse-dot {
+      width: 9px;
+      height: 9px;
+      background: var(--bio-emerald);
+      border-radius: 9999px;
+      box-shadow: 0 0 10px var(--bio-emerald);
+      animation: pulse-dot 1.8s infinite;
+      flex-shrink: 0;
+    }
+
+    @keyframes pulse-dot {
+      0% { transform: scale(0.9); opacity: 0.7; }
+      50% { transform: scale(1.3); opacity: 1; }
+      100% { transform: scale(0.9); opacity: 0.7; }
+    }
+
+    .loc-coords-sub {
+      font-family: var(--font-mono);
+      font-size: 0.78rem;
+      color: var(--text-muted);
+    }
+
     /* ==========================================================================
        BLOQUE SUPERIOR: HERO SOLAR (HORA VERDADERA Y BÓVEDA CELESTE)
        ========================================================================== */
@@ -875,6 +920,17 @@
       </div>
     </header>
 
+    <!-- BARRA DE UBICACIÓN ACTIVA -->
+    <div class="active-location-bar" id="active-location-bar">
+      <div class="loc-indicator-pill">
+        <span class="live-pulse-dot"></span>
+        <span id="loc-display-label">Detectando ubicación solar...</span>
+      </div>
+      <div class="loc-coords-sub" id="loc-coords-sub">
+        Lat: 00.0000° • Lon: 00.0000° • UTC 0
+      </div>
+    </div>
+
     <!-- BLOQUE HERO: HORA SOLAR Y BÓVEDA CELESTE -->
     <section class="hero-solar-grid">
       <!-- RELOJ SOLAR PRINCIPAL -->
@@ -1118,51 +1174,77 @@
       'use strict';
 
       /* --------------------------------------------------------------------------
-         PRESETS DE CIUDADES GLOBALES
+         BASE DE DATOS DE ZONAS HORARIAS Y COORDENADAS (AUTO-DETECCIÓN INSTANTÁNEA)
          -------------------------------------------------------------------------- */
-      const CITIES = {
-        CDMX: { name: 'Ciudad de México', lat: 19.4326, lon: -99.1332, tz: -6 },
-        MADRID: { name: 'Madrid, España', lat: 40.4168, lon: -3.7038, tz: 1 },
-        BOGOTA: { name: 'Bogotá, Colombia', lat: 4.7110, lon: -74.0721, tz: -5 },
-        BUENOS_AIRES: { name: 'Buenos Aires, Argentina', lat: -34.6037, lon: -58.3816, tz: -3 },
-        SANTIAGO: { name: 'Santiago, Chile', lat: -33.4489, lon: -70.6693, tz: -3 },
-        NEW_YORK: { name: 'Nueva York, EE. UU.', lat: 40.7128, lon: -74.0060, tz: -4 },
-        LONDON: { name: 'Londres, Reino Unido', lat: 51.5074, lon: -0.1278, tz: 0 },
-        PARIS: { name: 'París, Francia', lat: 48.8566, lon: 2.3522, tz: 1 },
-        TOKYO: { name: 'Tokio, Japón', lat: 35.6762, lon: 139.6503, tz: 9 }
+      const TIMEZONE_COORDS = {
+        // México
+        'America/Merida': { name: 'Mérida, Yucatán, México', lat: 20.9674, lon: -89.5926, tz: -6 },
+        'America/Cancun': { name: 'Cancún, Quintana Roo, México', lat: 21.1619, lon: -86.8515, tz: -5 },
+        'America/Mexico_City': { name: 'Ciudad de México, México', lat: 19.4326, lon: -99.1332, tz: -6 },
+        'America/Monterrey': { name: 'Monterrey, N.L., México', lat: 25.6866, lon: -100.3161, tz: -6 },
+        'America/Guadalajara': { name: 'Guadalajara, Jalisco, México', lat: 20.6597, lon: -103.3496, tz: -6 },
+        'America/Tijuana': { name: 'Tijuana, Baja California, México', lat: 32.5149, lon: -117.0382, tz: -7 },
+        'America/Hermosillo': { name: 'Hermosillo, Sonora, México', lat: 29.0729, lon: -110.9559, tz: -7 },
+        'America/Chihuahua': { name: 'Chihuahua, México', lat: 28.6353, lon: -106.0889, tz: -6 },
+        'America/Mazatlan': { name: 'Mazatlán, Sinaloa, México', lat: 23.2494, lon: -106.4111, tz: -7 },
+        'America/Matamoros': { name: 'Matamoros, Tamaulipas, México', lat: 25.8690, lon: -97.5027, tz: -6 },
+        'America/Bahia_Banderas': { name: 'Bahía de Banderas, Nayarit', lat: 20.8016, lon: -105.2536, tz: -6 },
+        
+        // España y Europa
+        'Europe/Madrid': { name: 'Madrid, España', lat: 40.4168, lon: -3.7038, tz: 1 },
+        'Europe/Barcelona': { name: 'Barcelona, España', lat: 41.3879, lon: 2.1699, tz: 1 },
+        'Atlantic/Canary': { name: 'Islas Canarias, España', lat: 28.1235, lon: -15.4363, tz: 0 },
+        'Europe/Lisbon': { name: 'Lisboa, Portugal', lat: 38.7223, lon: -9.1393, tz: 0 },
+        'Europe/London': { name: 'Londres, Reino Unido', lat: 51.5074, lon: -0.1278, tz: 0 },
+        'Europe/Paris': { name: 'París, Francia', lat: 48.8566, lon: 2.3522, tz: 1 },
+        'Europe/Rome': { name: 'Roma, Italia', lat: 41.9028, lon: 12.4964, tz: 1 },
+        'Europe/Berlin': { name: 'Berlín, Alemania', lat: 52.5200, lon: 13.4050, tz: 1 },
+
+        // Sudamérica y Centroamérica
+        'America/Bogota': { name: 'Bogotá, Colombia', lat: 4.7110, lon: -74.0721, tz: -5 },
+        'America/Medellin': { name: 'Medellín, Colombia', lat: 6.2442, lon: -75.5812, tz: -5 },
+        'America/Lima': { name: 'Lima, Perú', lat: -12.0464, lon: -77.0428, tz: -5 },
+        'America/Santiago': { name: 'Santiago, Chile', lat: -33.4489, lon: -70.6693, tz: -3 },
+        'America/Buenos_Aires': { name: 'Buenos Aires, Argentina', lat: -34.6037, lon: -58.3816, tz: -3 },
+        'America/Montevideo': { name: 'Montevideo, Uruguay', lat: -34.9011, lon: -56.1645, tz: -3 },
+        'America/Caracas': { name: 'Caracas, Venezuela', lat: 10.4806, lon: -66.9036, tz: -4 },
+        'America/La_Paz': { name: 'La Paz, Bolivia', lat: -16.5000, lon: -68.1500, tz: -4 },
+        'America/Asuncion': { name: 'Asunción, Paraguay', lat: -25.2637, lon: -57.5759, tz: -4 },
+        'America/Guatemala': { name: 'Ciudad de Guatemala', lat: 14.6349, lon: -90.5069, tz: -6 },
+        'America/Costa_Rica': { name: 'San José, Costa Rica', lat: 9.9281, lon: -84.0907, tz: -6 },
+        'America/Panama': { name: 'Ciudad de Panamá', lat: 8.9824, lon: -79.5199, tz: -5 },
+        'America/Santo_Domingo': { name: 'Santo Domingo, Rep. Dominicana', lat: 18.4861, lon: -69.9312, tz: -4 },
+        'America/Puerto_Rico': { name: 'San Juan, Puerto Rico', lat: 18.4655, lon: -66.1057, tz: -4 },
+        'America/Havana': { name: 'La Habana, Cuba', lat: 23.1136, lon: -82.3666, tz: -5 },
+
+        // Norteamérica y Asia
+        'America/New_York': { name: 'Nueva York, EE. UU.', lat: 40.7128, lon: -74.0060, tz: -4 },
+        'America/Chicago': { name: 'Chicago, EE. UU.', lat: 41.8781, lon: -87.6298, tz: -5 },
+        'America/Denver': { name: 'Denver, EE. UU.', lat: 39.7392, lon: -104.9903, tz: -6 },
+        'America/Los_Angeles': { name: 'Los Ángeles, EE. UU.', lat: 34.0522, lon: -118.2437, tz: -7 },
+        'America/Phoenix': { name: 'Phoenix, EE. UU.', lat: 33.4484, lon: -112.0740, tz: -7 },
+        'Asia/Tokyo': { name: 'Tokio, Japón', lat: 35.6762, lon: 139.6503, tz: 9 }
       };
 
       /* --------------------------------------------------------------------------
          ESTADO DE LA APLICACIÓN
          -------------------------------------------------------------------------- */
       const state = {
-        lat: 19.4326,
-        lon: -99.1332,
-        tz: -6, // UTC offset en horas
-        selectedMonthFixed: 0 // 0 a 12 (13 meses)
+        cityName: 'Mérida, Yucatán, México',
+        lat: 20.9674,
+        lon: -89.5926,
+        tz: -6,
+        source: 'Auto-detectada',
+        selectedMonthFixed: 0
       };
-
-      // Recuperar de localStorage si existe
-      try {
-        const saved = localStorage.getItem('solarium_geo');
-        if (saved) {
-          const parsed = JSON.parse(saved);
-          state.lat = parsed.lat;
-          state.lon = parsed.lon;
-          state.tz = parsed.tz;
-        } else {
-          // Detectar automáticamente el timezone local del sistema
-          const sysOffset = -new Date().getTimezoneOffset() / 60;
-          state.tz = sysOffset;
-        }
-      } catch (e) {
-        console.warn(e);
-      }
 
       /* --------------------------------------------------------------------------
          ELEMENTOS DOM
          -------------------------------------------------------------------------- */
       const dom = {
+        locDisplayLabel: document.getElementById('loc-display-label'),
+        locCoordsSub: document.getElementById('loc-coords-sub'),
+
         displaySolarTime: document.getElementById('display-solar-time'),
         displayCivilTime: document.getElementById('display-civil-time'),
         badgeSolarDiff: document.getElementById('badge-solar-diff'),
@@ -1207,6 +1289,48 @@
           document.getElementById('week-card-4')
         ]
       };
+
+      /* --------------------------------------------------------------------------
+         FUNCIÓN CENTRAL DE APLICACIÓN DE UBICACIÓN
+         -------------------------------------------------------------------------- */
+      function applyLocation(name, lat, lon, tz, source = 'Auto-detectada') {
+        state.cityName = name;
+        state.lat = lat;
+        state.lon = lon;
+        state.tz = tz;
+        state.source = source;
+
+        // Actualizar barra de ubicación activa
+        if (dom.locDisplayLabel) {
+          dom.locDisplayLabel.textContent = `${name} (${source})`;
+        }
+        if (dom.locCoordsSub) {
+          const latDir = lat >= 0 ? 'N' : 'S';
+          const lonDir = lon >= 0 ? 'E' : 'W';
+          const tzSign = tz >= 0 ? '+' : '';
+          dom.locCoordsSub.textContent = `Lat: ${Math.abs(lat).toFixed(4)}° ${latDir} • Lon: ${Math.abs(lon).toFixed(4)}° ${lonDir} • UTC ${tzSign}${tz}`;
+        }
+
+        // Sincronizar o insertar en el selector de ciudades
+        let matchFound = false;
+        for (let opt of dom.selectCity.options) {
+          if (opt.textContent.toLowerCase().includes(name.split(',')[0].toLowerCase())) {
+            dom.selectCity.value = opt.value;
+            matchFound = true;
+            break;
+          }
+        }
+        if (!matchFound) {
+          const newOpt = document.createElement('option');
+          newOpt.value = 'AUTO_DETECTED';
+          newOpt.textContent = `📍 ${name}`;
+          newOpt.selected = true;
+          dom.selectCity.insertBefore(newOpt, dom.selectCity.firstChild);
+        }
+
+        // Persistir
+        saveGeoState();
+      }
 
       /* --------------------------------------------------------------------------
          ASTRONOMÍA: ECUACIÓN DEL TIEMPO Y COORDENADAS SOLARES
@@ -1677,34 +1801,57 @@
          -------------------------------------------------------------------------- */
       // Selector de ciudad preconfigurada
       dom.selectCity.addEventListener('change', (e) => {
-        const cityKey = e.target.value;
-        if (CITIES[cityKey]) {
-          const c = CITIES[cityKey];
-          state.lat = c.lat;
-          state.lon = c.lon;
-          state.tz = c.tz;
-          saveGeoState();
+        const val = e.target.value;
+        if (TIMEZONE_COORDS[val]) {
+          const c = TIMEZONE_COORDS[val];
+          applyLocation(c.name, c.lat, c.lon, c.tz, 'Selección Manual');
+        } else {
+          // Buscar por clave en presets tradicionales
+          const found = Object.values(TIMEZONE_COORDS).find(item => item.name.toLowerCase().includes(val.toLowerCase()));
+          if (found) {
+            applyLocation(found.name, found.lat, found.lon, found.tz, 'Selección Manual');
+          }
         }
       });
 
-      // Geolocalización GPS
+      // Geolocalización GPS con detección de protocolo y fallback
       dom.btnGps.addEventListener('click', () => {
+        // Advertencia si se corre desde file://
+        if (window.location.protocol === 'file:') {
+          const jump = confirm(
+            '⚠️ Restricción de seguridad del navegador:\n\n' +
+            'Safari y Chrome bloquean el GPS satelital al abrir archivos locales (file://).\n\n' +
+            '¿Deseas saltar al servidor local seguro (http://127.0.0.1:5195) donde la geolocalización está habilitada?'
+          );
+          if (jump) {
+            window.location.href = 'http://127.0.0.1:5195';
+            return;
+          }
+        }
+
         if ('geolocation' in navigator) {
           dom.btnGps.classList.add('active');
+          if (dom.locDisplayLabel) dom.locDisplayLabel.textContent = 'Conectando con satélites GPS...';
+
           navigator.geolocation.getCurrentPosition(
             (pos) => {
-              state.lat = pos.coords.latitude;
-              state.lon = pos.coords.longitude;
-              state.tz = -new Date().getTimezoneOffset() / 60;
-              saveGeoState();
               dom.btnGps.classList.remove('active');
-              alert(`Ubicación GPS sincronizada:\nLat: ${state.lat.toFixed(4)}°, Lon: ${state.lon.toFixed(4)}°`);
+              const lat = pos.coords.latitude;
+              const lon = pos.coords.longitude;
+              const tz = -new Date().getTimezoneOffset() / 60;
+              applyLocation(`Posición Satelital GPS`, lat, lon, tz, 'GPS Satélite');
             },
             (err) => {
               dom.btnGps.classList.remove('active');
-              alert('No se pudo acceder al GPS. Puedes ingresar las coordenadas manualmente en el botón Coordenadas.');
-            }
+              const sysTz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+              const fallback = TIMEZONE_COORDS[sysTz] || { name: 'Mérida, Yucatán, México', lat: 20.9674, lon: -89.5926, tz: -6 };
+              applyLocation(fallback.name, fallback.lat, fallback.lon, fallback.tz, 'Zona del Sistema');
+              alert(`Información de ubicación:\n\nEl sistema mantuvo la ubicación detectada por tu zona horaria (${fallback.name}).\nMotivo: El navegador reportó: ${err.message || 'Permiso o tiempo de espera agotado'}`);
+            },
+            { enableHighAccuracy: true, timeout: 8000 }
           );
+        } else {
+          alert('Tu navegador no soporta la API de geolocalización.');
         }
       });
 
@@ -1721,21 +1868,48 @@
       });
 
       dom.btnModalSave.addEventListener('click', () => {
-        state.lat = parseFloat(dom.inputLat.value) || 0;
-        state.lon = parseFloat(dom.inputLon.value) || 0;
-        state.tz = parseFloat(dom.inputTz.value) || 0;
-        saveGeoState();
+        const lat = parseFloat(dom.inputLat.value) || 0;
+        const lon = parseFloat(dom.inputLon.value) || 0;
+        const tz = parseFloat(dom.inputTz.value) || 0;
+        applyLocation(`Coordenadas Personalizadas`, lat, lon, tz, 'Manual');
         dom.modalCoords.classList.remove('open');
       });
 
       function saveGeoState() {
         try {
           localStorage.setItem('solarium_geo', JSON.stringify({
+            name: state.cityName,
             lat: state.lat,
             lon: state.lon,
-            tz: state.tz
+            tz: state.tz,
+            source: state.source
           }));
         } catch (e) {}
+      }
+
+      // Detección silenciosa en segundo plano por IP (si hay internet)
+      function tryBackgroundIpGeo() {
+        if (!navigator.onLine) return;
+        fetch('https://get.geojs.io/v1/ip/geo.json', { signal: AbortSignal.timeout ? AbortSignal.timeout(3000) : undefined })
+          .then(res => res.json())
+          .then(data => {
+            if (data && data.latitude && data.longitude) {
+              const lat = parseFloat(data.latitude);
+              const lon = parseFloat(data.longitude);
+              const city = data.city || data.region || 'Ubicación Local';
+              const country = data.country || '';
+              const fullName = `${city}, ${country}`.trim();
+              const tz = -new Date().getTimezoneOffset() / 60;
+              // Solo refinar si no se guardó una configuración manual
+              const hasManual = localStorage.getItem('solarium_geo');
+              if (!hasManual) {
+                applyLocation(fullName, lat, lon, tz, 'Red IP');
+              }
+            }
+          })
+          .catch(() => {
+            // Silencioso en modo offline
+          });
       }
 
       // Navegación de meses del Calendario Fijo
@@ -1757,14 +1931,52 @@
       });
 
       /* --------------------------------------------------------------------------
-         ARRANQUE INICIAL
+         ARRANQUE INICIAL ROBUSTO
          -------------------------------------------------------------------------- */
-      const initialFixed = getFixedDate(new Date());
-      state.selectedMonthFixed = initialFixed.monthIndex;
-      dom.selectFixedMonth.value = state.selectedMonthFixed;
+      function initializeSolarium() {
+        // 1. Detectar o restaurar ubicación
+        let locationFound = false;
+        try {
+          const savedStr = localStorage.getItem('solarium_geo');
+          if (savedStr) {
+            const saved = JSON.parse(savedStr);
+            if (saved && saved.lat != null && saved.lon != null) {
+              applyLocation(saved.name || 'Ubicación Guardada', saved.lat, saved.lon, saved.tz, saved.source || 'Guardada');
+              locationFound = true;
+            }
+          }
+        } catch (e) {}
 
-      renderFixedCalendar();
-      requestAnimationFrame(updateApp);
+        if (!locationFound) {
+          // Detectar automáticamente por la zona horaria IANA del sistema operativo (0 ms, 100% offline)
+          const systemTz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+          console.log('Solarium: Zona horaria IANA detectada:', systemTz);
+
+          if (TIMEZONE_COORDS[systemTz]) {
+            const match = TIMEZONE_COORDS[systemTz];
+            applyLocation(match.name, match.lat, match.lon, match.tz, 'Detectada por Sistema');
+          } else {
+            // Estimación basada en el offset horario UTC
+            const sysOffsetHours = -new Date().getTimezoneOffset() / 60;
+            const approxLon = sysOffsetHours * 15;
+            applyLocation(`Zona Horaria (${systemTz})`, 20.0, approxLon, sysOffsetHours, 'Zona IANA');
+          }
+
+          // Intentar afinar por IP en segundo plano
+          tryBackgroundIpGeo();
+        }
+
+        // 2. Calendario de 13 meses
+        const initialFixed = getFixedDate(new Date());
+        state.selectedMonthFixed = initialFixed.monthIndex;
+        dom.selectFixedMonth.value = state.selectedMonthFixed;
+        renderFixedCalendar();
+
+        // 3. Renderizado inmediato síncrono (sin esperar al primer rAF)
+        updateApp();
+      }
+
+      initializeSolarium();
     })();
   </script>
 </body>
