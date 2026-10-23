@@ -1,0 +1,1771 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="color-scheme" content="dark">
+  <meta name="theme-color" content="#080b14">
+  <title>Solarium | Reloj Solar Local & Calendario Fijo de 13 Meses</title>
+  
+  <!-- Favicon SVG con Sol y Luna Entrelazados -->
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='46' fill='%23080b14' stroke='%23f59e0b' stroke-width='4'/%3E%3Cpath d='M50 16 A34 34 0 0 0 50 84 A24 24 0 0 1 50 16' fill='%2394a3b8'/%3E%3Ccircle cx='50' cy='50' r='18' fill='%23f59e0b'/%3E%3Cline x1='50' y1='10' x2='50' y2='20' stroke='%23f59e0b' stroke-width='4' stroke-linecap='round'/%3E%3Cline x1='50' y1='80' x2='50' y2='90' stroke='%23f59e0b' stroke-width='4' stroke-linecap='round'/%3E%3Cline x1='10' y1='50' x2='20' y2='50' stroke='%23f59e0b' stroke-width='4' stroke-linecap='round'/%3E%3Cline x1='80' y1='50' x2='90' y2='50' stroke='%23f59e0b' stroke-width='4' stroke-linecap='round'/%3E%3C/svg%3E">
+
+  <style>
+    /* ==========================================================================
+       VARIABLES Y RESET
+       ========================================================================== */
+    :root {
+      --bg-space: #070a12;
+      --bg-card: #0d121f;
+      --bg-card-hover: #131a2c;
+      --bg-elevated: #182238;
+      
+      --border-subtle: rgba(148, 163, 184, 0.12);
+      --border-gold: rgba(245, 158, 11, 0.35);
+      --border-cyan: rgba(56, 189, 248, 0.35);
+      
+      --solar-gold: #f59e0b;
+      --solar-amber: #d97706;
+      --solar-glow: rgba(245, 158, 11, 0.35);
+      
+      --lunar-silver: #cbd5e1;
+      --lunar-blue: #38bdf8;
+      --lunar-glow: rgba(56, 189, 248, 0.25);
+      
+      --bio-emerald: #10b981;
+      --bio-emerald-glow: rgba(16, 185, 129, 0.25);
+      
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --text-dim: #64748b;
+      
+      --font-mono: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, Consolas, Monaco, monospace;
+      --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      
+      --shadow-card: 0 12px 36px -6px rgba(0, 0, 0, 0.65), 0 0 0 1px var(--border-subtle);
+    }
+
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html, body {
+      min-height: 100vh;
+      background-color: var(--bg-space);
+      color: var(--text-main);
+      font-family: var(--font-sans);
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+      background-image: 
+        radial-gradient(ellipse 70% 40% at 50% 0%, rgba(245, 158, 11, 0.1), transparent 60%),
+        radial-gradient(ellipse 60% 40% at 85% 90%, rgba(56, 189, 248, 0.08), transparent 50%),
+        radial-gradient(ellipse 50% 30% at 15% 75%, rgba(16, 185, 129, 0.06), transparent 50%);
+      background-attachment: fixed;
+    }
+
+    /* ==========================================================================
+       CONTENEDOR PRINCIPAL
+       ========================================================================== */
+    .app-wrapper {
+      max-width: 1140px;
+      margin: 0 auto;
+      padding: 2rem 1.25rem 4rem;
+      display: flex;
+      flex-direction: column;
+      gap: 2rem;
+    }
+
+    /* ==========================================================================
+       CABECERA Y SELECTOR DE UBICACIÓN
+       ========================================================================== */
+    .app-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 1.25rem;
+      padding-bottom: 1.5rem;
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .brand-section {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .brand-icon-box {
+      width: 52px;
+      height: 52px;
+      border-radius: 16px;
+      background: linear-gradient(135deg, rgba(245, 158, 11, 0.25), rgba(56, 189, 248, 0.15));
+      border: 1px solid var(--border-gold);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 20px var(--solar-glow);
+    }
+
+    .brand-icon-box svg {
+      width: 28px;
+      height: 28px;
+      stroke: var(--solar-gold);
+      fill: none;
+      stroke-width: 2;
+    }
+
+    .brand-titles h1 {
+      font-size: 1.5rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      flex-wrap: wrap;
+    }
+
+    .badge-sub {
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      padding: 0.2rem 0.6rem;
+      background: rgba(245, 158, 11, 0.15);
+      border: 1px solid var(--border-gold);
+      color: var(--solar-gold);
+      border-radius: 9999px;
+    }
+
+    .brand-titles p {
+      font-size: 0.88rem;
+      color: var(--text-muted);
+    }
+
+    .location-controls {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      flex-wrap: wrap;
+    }
+
+    .select-city {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      color: var(--text-main);
+      padding: 0.55rem 0.9rem;
+      border-radius: 10px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      outline: none;
+      cursor: pointer;
+      transition: border-color 0.2s;
+    }
+
+    .select-city:focus {
+      border-color: var(--solar-gold);
+    }
+
+    .btn-header {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.45rem;
+      padding: 0.55rem 0.9rem;
+      font-size: 0.82rem;
+      font-weight: 600;
+      background: var(--bg-card);
+      color: var(--text-muted);
+      border: 1px solid var(--border-subtle);
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .btn-header:hover {
+      background: var(--bg-card-hover);
+      color: var(--text-main);
+      border-color: rgba(245, 158, 11, 0.4);
+    }
+
+    .btn-header.active {
+      background: rgba(245, 158, 11, 0.15);
+      border-color: var(--solar-gold);
+      color: var(--solar-gold);
+    }
+
+    .btn-header svg {
+      width: 15px;
+      height: 15px;
+      stroke-width: 2;
+      stroke: currentColor;
+      fill: none;
+    }
+
+    /* ==========================================================================
+       BLOQUE SUPERIOR: HERO SOLAR (HORA VERDADERA Y BÓVEDA CELESTE)
+       ========================================================================== */
+    .hero-solar-grid {
+      display: grid;
+      grid-template-columns: 1.15fr 0.85fr;
+      gap: 1.5rem;
+      align-items: stretch;
+    }
+
+    @media (max-width: 880px) {
+      .hero-solar-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* TARJETA DEL RELOJ SOLAR */
+    .solar-clock-card {
+      background: linear-gradient(180deg, var(--bg-card) 0%, rgba(13, 18, 31, 0.85) 100%);
+      border: 1px solid var(--border-subtle);
+      border-radius: 24px;
+      padding: 2.25rem 2rem 2rem;
+      box-shadow: var(--shadow-card);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .solar-clock-card::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 15%;
+      right: 15%;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--solar-gold), transparent);
+    }
+
+    .card-label-top {
+      font-size: 0.76rem;
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--solar-gold);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .solar-digits-main {
+      font-family: var(--font-mono);
+      font-variant-numeric: tabular-nums lining-nums;
+      font-size: clamp(3.2rem, 8vw, 4.8rem);
+      font-weight: 800;
+      letter-spacing: -0.04em;
+      line-height: 1;
+      color: var(--text-main);
+      text-shadow: 0 0 28px var(--solar-glow);
+      margin: 0.75rem 0;
+    }
+
+    .solar-digits-main .sec-unit {
+      color: var(--solar-gold);
+      font-size: 0.75em;
+    }
+
+    .solar-subinfo-row {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      flex-wrap: wrap;
+      margin-bottom: 1.5rem;
+      font-size: 0.86rem;
+    }
+
+    .badge-diff {
+      padding: 0.25rem 0.65rem;
+      border-radius: 8px;
+      font-family: var(--font-mono);
+      font-weight: 700;
+      font-size: 0.8rem;
+      background: rgba(56, 189, 248, 0.12);
+      border: 1px solid var(--border-cyan);
+      color: var(--lunar-blue);
+    }
+
+    .solar-metrics-pills {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+      gap: 0.75rem;
+      margin-top: 1rem;
+      padding-top: 1.25rem;
+      border-top: 1px solid var(--border-subtle);
+    }
+
+    .solar-pill {
+      background: var(--bg-elevated);
+      border: 1px solid var(--border-subtle);
+      border-radius: 12px;
+      padding: 0.75rem 0.85rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.2rem;
+    }
+
+    .solar-pill-title {
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      font-weight: 700;
+      color: var(--text-dim);
+    }
+
+    .solar-pill-val {
+      font-family: var(--font-mono);
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: var(--text-main);
+    }
+
+    /* TARJETA DE LA BÓVEDA CELESTE (CANVAS SOLAR) */
+    .sky-vault-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: 24px;
+      padding: 1.75rem;
+      box-shadow: var(--shadow-card);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .sky-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.75rem;
+    }
+
+    .sky-title {
+      font-size: 0.78rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--lunar-blue);
+    }
+
+    .sky-zenith-badge {
+      font-size: 0.72rem;
+      font-weight: 700;
+      color: var(--solar-gold);
+      background: rgba(245, 158, 11, 0.12);
+      padding: 0.15rem 0.5rem;
+      border-radius: 6px;
+      border: 1px solid rgba(245, 158, 11, 0.3);
+    }
+
+    .sky-canvas-container {
+      position: relative;
+      width: 100%;
+      height: 160px;
+      margin: 0.5rem 0;
+    }
+
+    #sky-canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    .sky-footer-times {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.8rem;
+      padding-top: 0.75rem;
+      border-top: 1px solid var(--border-subtle);
+      color: var(--text-muted);
+    }
+
+    .sky-footer-times strong {
+      color: var(--text-main);
+      font-family: var(--font-mono);
+    }
+
+    /* ==========================================================================
+       SECCIÓN CENTRAL: CALENDARIO FIJO DE 13 MESES DE 28 DÍAS
+       ========================================================================== */
+    .calendar-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: 24px;
+      padding: 2.25rem 2rem;
+      box-shadow: var(--shadow-card);
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+
+    .calendar-top-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    .calendar-title-group h2 {
+      font-size: 1.35rem;
+      font-weight: 800;
+      color: var(--text-main);
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+    }
+
+    .calendar-title-group p {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+
+    .month-nav-box {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: var(--bg-elevated);
+      border: 1px solid var(--border-subtle);
+      padding: 0.35rem 0.5rem;
+      border-radius: 12px;
+    }
+
+    .btn-nav-month {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      padding: 0.35rem;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.2s, color 0.2s;
+    }
+
+    .btn-nav-month:hover {
+      background: var(--bg-card-hover);
+      color: var(--text-main);
+    }
+
+    .month-selector-dropdown {
+      background: transparent;
+      border: none;
+      color: var(--solar-gold);
+      font-size: 0.95rem;
+      font-weight: 700;
+      outline: none;
+      cursor: pointer;
+    }
+
+    .month-selector-dropdown option {
+      background: var(--bg-elevated);
+      color: var(--text-main);
+    }
+
+    /* GRID DEL CALENDARIO DE 28 DÍAS */
+    .calendar-grid-wrapper {
+      width: 100%;
+      overflow-x: auto;
+    }
+
+    .calendar-table {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0.45rem;
+      min-width: 580px;
+    }
+
+    .calendar-table th {
+      font-size: 0.74rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-dim);
+      padding: 0.5rem;
+      text-align: center;
+    }
+
+    .calendar-table th.sun-head {
+      color: var(--solar-gold);
+    }
+
+    .calendar-day-cell {
+      height: 64px;
+      background: rgba(24, 34, 56, 0.6);
+      border: 1px solid var(--border-subtle);
+      border-radius: 14px;
+      padding: 0.5rem;
+      vertical-align: top;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      position: relative;
+    }
+
+    .calendar-day-cell:hover {
+      background: var(--bg-elevated);
+      border-color: rgba(245, 158, 11, 0.4);
+      transform: translateY(-2px);
+    }
+
+    .calendar-day-cell.is-today {
+      background: linear-gradient(135deg, rgba(245, 158, 11, 0.2), rgba(24, 34, 56, 0.9));
+      border: 2px solid var(--solar-gold);
+      box-shadow: 0 0 16px var(--solar-glow);
+    }
+
+    .cell-num {
+      font-family: var(--font-mono);
+      font-size: 1.15rem;
+      font-weight: 800;
+      color: var(--text-main);
+      display: block;
+    }
+
+    .calendar-day-cell.is-today .cell-num {
+      color: var(--solar-gold);
+    }
+
+    .cell-greg-sub {
+      font-size: 0.68rem;
+      color: var(--text-dim);
+      display: block;
+      margin-top: 0.15rem;
+    }
+
+    .cell-bio-phase {
+      width: 6px;
+      height: 6px;
+      border-radius: 9999px;
+      position: absolute;
+      bottom: 8px;
+      right: 8px;
+    }
+
+    /* BARRA DE LAS 4 SEMANAS BIOLÓGICAS */
+    .bio-weeks-bar {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 0.75rem;
+      padding-top: 1rem;
+      border-top: 1px solid var(--border-subtle);
+    }
+
+    @media (max-width: 768px) {
+      .bio-weeks-bar {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+
+    .bio-week-badge {
+      background: var(--bg-elevated);
+      border: 1px solid var(--border-subtle);
+      border-radius: 12px;
+      padding: 0.75rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.2rem;
+    }
+
+    .bio-week-badge.active-week {
+      border-color: var(--bio-emerald);
+      background: rgba(16, 185, 129, 0.12);
+      box-shadow: 0 0 14px var(--bio-emerald-glow);
+    }
+
+    .bio-week-title {
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+
+    .bio-week-badge.active-week .bio-week-title {
+      color: var(--bio-emerald);
+    }
+
+    .bio-week-desc {
+      font-size: 0.75rem;
+      color: var(--text-dim);
+      line-height: 1.35;
+    }
+
+    /* ==========================================================================
+       SECCIÓN INFERIOR DUAL: LUNA EN VIVO Y RITMO CIRCADIANO SOLAR
+       ========================================================================== */
+    .dual-bottom-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.5rem;
+    }
+
+    @media (max-width: 820px) {
+      .dual-bottom-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .info-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: 20px;
+      padding: 1.75rem;
+      box-shadow: var(--shadow-card);
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+    }
+
+    .info-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .info-card-title {
+      font-size: 0.95rem;
+      font-weight: 800;
+      color: var(--text-main);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    /* VISUALIZADOR LUNAR */
+    .lunar-visual-box {
+      display: flex;
+      align-items: center;
+      gap: 1.5rem;
+      background: rgba(24, 34, 56, 0.5);
+      border: 1px solid var(--border-subtle);
+      border-radius: 16px;
+      padding: 1.25rem 1.5rem;
+    }
+
+    .moon-svg-disc {
+      width: 72px;
+      height: 72px;
+      border-radius: 9999px;
+      box-shadow: 0 0 24px var(--lunar-glow);
+      flex-shrink: 0;
+    }
+
+    .lunar-details {
+      display: flex;
+      flex-direction: column;
+      gap: 0.35rem;
+    }
+
+    .lunar-phase-name {
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: var(--text-main);
+    }
+
+    .lunar-pct-txt {
+      font-family: var(--font-mono);
+      font-size: 0.85rem;
+      color: var(--lunar-blue);
+      font-weight: 600;
+    }
+
+    .lunar-cycle-day {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+    }
+
+    /* RITMO CIRCADIANO HORARIO */
+    .circadian-step-box {
+      background: rgba(24, 34, 56, 0.5);
+      border: 1px solid var(--border-subtle);
+      border-radius: 16px;
+      padding: 1.25rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.6rem;
+    }
+
+    .circadian-phase-pill {
+      font-size: 0.74rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--solar-gold);
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+
+    .circadian-text-bold {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: var(--text-main);
+    }
+
+    .circadian-advice {
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+
+    /* ==========================================================================
+       CONVERSOR Y MODAL DE COORDENADAS
+       ========================================================================== */
+    .custom-location-modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.75);
+      backdrop-filter: blur(8px);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+      padding: 1.25rem;
+    }
+
+    .custom-location-modal.open {
+      display: flex;
+    }
+
+    .modal-box {
+      background: var(--bg-card);
+      border: 1px solid var(--border-gold);
+      border-radius: 20px;
+      padding: 2rem;
+      max-width: 440px;
+      width: 100%;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.8);
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+    }
+
+    .modal-title {
+      font-size: 1.15rem;
+      font-weight: 800;
+      color: var(--solar-gold);
+    }
+
+    .modal-field {
+      display: flex;
+      flex-direction: column;
+      gap: 0.35rem;
+    }
+
+    .modal-field label {
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: var(--text-muted);
+    }
+
+    .modal-field input {
+      background: var(--bg-elevated);
+      border: 1px solid var(--border-subtle);
+      border-radius: 10px;
+      padding: 0.65rem 0.85rem;
+      color: var(--text-main);
+      font-family: var(--font-mono);
+      font-size: 0.95rem;
+      outline: none;
+    }
+
+    .modal-field input:focus {
+      border-color: var(--solar-gold);
+    }
+
+    .modal-actions {
+      display: flex;
+      gap: 0.75rem;
+      margin-top: 0.5rem;
+    }
+
+    .btn-modal-primary {
+      flex: 1;
+      padding: 0.65rem;
+      background: var(--solar-gold);
+      color: #070a12;
+      border: none;
+      border-radius: 10px;
+      font-weight: 700;
+      font-size: 0.85rem;
+      cursor: pointer;
+    }
+
+    .btn-modal-cancel {
+      flex: 1;
+      padding: 0.65rem;
+      background: var(--bg-elevated);
+      color: var(--text-muted);
+      border: 1px solid var(--border-subtle);
+      border-radius: 10px;
+      font-weight: 600;
+      font-size: 0.85rem;
+      cursor: pointer;
+    }
+
+    /* FOOTER */
+    .app-footer {
+      text-align: center;
+      padding-top: 1.5rem;
+      font-size: 0.8rem;
+      color: var(--text-dim);
+    }
+  </style>
+</head>
+<body>
+
+  <div class="app-wrapper">
+
+    <!-- CABECERA PRINCIPAL -->
+    <header class="app-header">
+      <div class="brand-section">
+        <div class="brand-icon-box">
+          <svg viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="5"/>
+            <line x1="12" y1="1" x2="12" y2="3"/>
+            <line x1="12" y1="21" x2="12" y2="23"/>
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
+            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+            <line x1="1" y1="12" x2="3" y2="12"/>
+            <line x1="21" y1="12" x2="23" y2="12"/>
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
+            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+          </svg>
+        </div>
+        <div class="brand-titles">
+          <h1>
+            Solarium
+            <span class="badge-sub">Tiempo Natural & 13 Meses</span>
+          </h1>
+          <p>Reloj Solar Local Verdadero • Calendario de 28 Días • Armonía Circadiana</p>
+        </div>
+      </div>
+
+      <div class="location-controls">
+        <select id="select-city" class="select-city" title="Seleccionar ciudad preconfigurada">
+          <option value="CDMX">Ciudad de México (19.43° N, 99.13° W)</option>
+          <option value="MADRID">Madrid, España (40.41° N, 3.70° W)</option>
+          <option value="BOGOTA">Bogotá, Colombia (4.71° N, 74.07° W)</option>
+          <option value="BUENOS_AIRES">Buenos Aires, Argentina (34.60° S, 58.38° W)</option>
+          <option value="SANTIAGO">Santiago, Chile (33.44° S, 70.66° W)</option>
+          <option value="NEW_YORK">Nueva York, EE. UU. (40.71° N, 74.00° W)</option>
+          <option value="LONDON">Londres, Reino Unido (51.50° N, 0.12° W)</option>
+          <option value="PARIS">París, Francia (48.85° N, 2.35° E)</option>
+          <option value="TOKYO">Tokio, Japón (35.67° N, 139.65° E)</option>
+        </select>
+
+        <button id="btn-gps" class="btn-header" title="Detectar mi ubicación exacta por GPS">
+          <svg viewBox="0 0 24 24"><polygon points="3 11 22 2 13 21 11 13 3 11"/></svg>
+          <span>GPS</span>
+        </button>
+
+        <button id="btn-custom-coords" class="btn-header" title="Editar coordenadas manualmente">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+          <span>Coordenadas</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- BLOQUE HERO: HORA SOLAR Y BÓVEDA CELESTE -->
+    <section class="hero-solar-grid">
+      <!-- RELOJ SOLAR PRINCIPAL -->
+      <div class="solar-clock-card">
+        <div>
+          <div class="card-label-top">
+            <svg style="width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 2;" viewBox="0 0 24 24">
+              <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+            </svg>
+            Hora Solar Verdadera Local (LAST)
+          </div>
+
+          <!-- DÍGITOS GIGANTES DEL SOL -->
+          <div class="solar-digits-main" id="display-solar-time">
+            00:00<span class="sec-unit">:00</span>
+          </div>
+
+          <div class="solar-subinfo-row">
+            <span>Hora Civil Estándar: <strong id="display-civil-time" style="font-family: var(--font-mono); color: var(--text-main);">00:00:00</strong></span>
+            <span class="badge-diff" id="badge-solar-diff">Desfase: +00m 00s</span>
+          </div>
+        </div>
+
+        <!-- PÍLDORAS DE MÉTRICAS ASTRONÓMICAS -->
+        <div class="solar-metrics-pills">
+          <div class="solar-pill">
+            <span class="solar-pill-title">Mediodía Solar</span>
+            <span class="solar-pill-val" id="val-solar-noon" style="color: var(--solar-gold);">12:00:00 PM</span>
+          </div>
+          <div class="solar-pill">
+            <span class="solar-pill-title">Ecuación de Tiempo</span>
+            <span class="solar-pill-val" id="val-eot">+0.0 min</span>
+          </div>
+          <div class="solar-pill">
+            <span class="solar-pill-title">Altitud del Sol</span>
+            <span class="solar-pill-val" id="val-solar-altitude">00.0°</span>
+          </div>
+          <div class="solar-pill">
+            <span class="solar-pill-title">Fase Fotoperíodo</span>
+            <span class="solar-pill-val" id="val-day-phase" style="color: var(--lunar-blue); font-size: 0.95rem;">Día</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- BÓVEDA CELESTE EN VIVO -->
+      <div class="sky-vault-card">
+        <div class="sky-header">
+          <span class="sky-title">Trayectoria Solar y Cenit</span>
+          <span class="sky-zenith-badge" id="badge-zenith-info">Cenit: 12:00 Solar</span>
+        </div>
+
+        <div class="sky-canvas-container">
+          <canvas id="sky-canvas" width="400" height="160"></canvas>
+        </div>
+
+        <div class="sky-footer-times">
+          <span>Amanecer: <strong id="val-sunrise">06:00 AM</strong></span>
+          <span>Cenit: <strong id="val-zenith-time">12:00 PM</strong></span>
+          <span>Atardecer: <strong id="val-sunset">06:00 PM</strong></span>
+        </div>
+      </div>
+    </section>
+
+    <!-- CALENDARIO FIJO DE 13 MESES DE 28 DÍAS -->
+    <section class="calendar-card">
+      <div class="calendar-top-bar">
+        <div class="calendar-title-group">
+          <h2>
+            <svg style="width: 22px; height: 22px; stroke: var(--solar-gold); fill: none; stroke-width: 2;" viewBox="0 0 24 24">
+              <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+              <line x1="16" y1="2" x2="16" y2="6"/>
+              <line x1="8" y1="2" x2="8" y2="6"/>
+              <line x1="3" y1="10" x2="21" y2="10"/>
+            </svg>
+            Calendario Fijo Internacional (13 Meses)
+          </h2>
+          <p>4 semanas perfectas de 28 días por mes • El mes central sagrado: <strong style="color: var(--solar-gold);">Sol</strong></p>
+        </div>
+
+        <!-- SELECTOR Y NAVEGADOR DE MESES -->
+        <div class="month-nav-box">
+          <button id="btn-prev-month" class="btn-nav-month" title="Mes anterior">
+            <svg style="width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 2;" viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+          </button>
+          
+          <select id="select-fixed-month" class="month-selector-dropdown">
+            <option value="0">1. Enero (1 - 28)</option>
+            <option value="1">2. Febrero (1 - 28)</option>
+            <option value="2">3. Marzo (1 - 28)</option>
+            <option value="3">4. Abril (1 - 28)</option>
+            <option value="4">5. Mayo (1 - 28)</option>
+            <option value="5">6. Junio (1 - 28)</option>
+            <option value="6">☀️ 7. Sol (1 - 28) • Solsticio</option>
+            <option value="7">8. Julio (1 - 28)</option>
+            <option value="8">9. Agosto (1 - 28)</option>
+            <option value="9">10. Septiembre (1 - 28)</option>
+            <option value="10">11. Octubre (1 - 28)</option>
+            <option value="11">12. Noviembre (1 - 28)</option>
+            <option value="12">13. Diciembre (1 - 28)</option>
+          </select>
+
+          <button id="btn-next-month" class="btn-nav-month" title="Mes siguiente">
+            <svg style="width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 2;" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- MATRIZ MENSUAL PERPETUA DE 28 DÍAS -->
+      <div class="calendar-grid-wrapper">
+        <table class="calendar-table">
+          <thead>
+            <tr>
+              <th class="sun-head">Dom (1)</th>
+              <th>Lun (2)</th>
+              <th>Mar (3)</th>
+              <th>Mié (4)</th>
+              <th>Jue (5)</th>
+              <th>Vie (6)</th>
+              <th>Sáb (7)</th>
+            </tr>
+          </thead>
+          <tbody id="fixed-calendar-tbody">
+            <!-- Filas generadas dinámicamente con JavaScript -->
+          </tbody>
+        </table>
+      </div>
+
+      <!-- DESGLOSE DE LAS 4 SEMANAS BIOLÓGICAS DEL MES DE 28 DÍAS -->
+      <div class="bio-weeks-bar">
+        <div class="bio-week-badge" id="week-card-1">
+          <span class="bio-week-title"><span style="color: #38bdf8;">●</span> Sem 1 (1–7): Siembra</span>
+          <span class="bio-week-desc">Fase de renovación y siembra mental. Energía creativa en ascenso y planificación de nuevos hábitos.</span>
+        </div>
+        <div class="bio-week-badge" id="week-card-2">
+          <span class="bio-week-title"><span style="color: #f59e0b;">●</span> Sem 2 (8–14): Cenit</span>
+          <span class="bio-week-desc">Pico de vitalidad y fuerza cardiovascular. Máxima sociabilidad, comunicación y proyectos expansivos.</span>
+        </div>
+        <div class="bio-week-badge" id="week-card-3">
+          <span class="bio-week-title"><span style="color: #10b981;">●</span> Sem 3 (15–21): Cosecha</span>
+          <span class="bio-week-desc">Fase de consolidación, rigor analítico y trabajo profundo. Momento de cosechar avances concretos.</span>
+        </div>
+        <div class="bio-week-badge" id="week-card-4">
+          <span class="bio-week-title"><span style="color: #a855f7;">●</span> Sem 4 (22–28): Regeneración</span>
+          <span class="bio-week-desc">Fase de reposo, evaluación e introspección. Desintoxicación biológica y preparación para el siguiente ciclo.</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- BLOQUE INFERIOR DUAL: LUNA EN VIVO Y RITMO CIRCADIANO SOLAR -->
+    <section class="dual-bottom-grid">
+      <!-- CARD LUNAR -->
+      <div class="info-card">
+        <div class="info-card-header">
+          <span class="info-card-title">
+            <svg style="width: 20px; height: 20px; stroke: var(--lunar-blue); fill: none; stroke-width: 2;" viewBox="0 0 24 24">
+              <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+            </svg>
+            Fase Lunar en Vivo & Armonía Circalunar
+          </span>
+          <span style="font-size: 0.72rem; color: var(--text-dim); font-family: var(--font-mono);">29.53 días</span>
+        </div>
+
+        <div class="lunar-visual-box">
+          <svg class="moon-svg-disc" id="moon-render-svg" viewBox="0 0 100 100"></svg>
+          <div class="lunar-details">
+            <span class="lunar-phase-name" id="lunar-phase-name">Cargando fase...</span>
+            <span class="lunar-pct-txt" id="lunar-pct-txt">0% Iluminación</span>
+            <span class="lunar-cycle-day" id="lunar-age-txt">Día 0.0 del ciclo sinódico</span>
+          </div>
+        </div>
+
+        <p style="font-size: 0.84rem; color: var(--text-muted); line-height: 1.55;">
+          El mes de 28 días recupera la proporción del mes sideral lunar (~27,3 d) y del ciclo hormonal humano. Al conectar la luna con el calendario solar de 13 meses, el paso del tiempo vuelve a ser armónico con la marea terrestre y la glándula pineal.
+        </p>
+      </div>
+
+      <!-- CARD CRONOBIOLOGÍA CIRCADIANO -->
+      <div class="info-card">
+        <div class="info-card-header">
+          <span class="info-card-title">
+            <svg style="width: 20px; height: 20px; stroke: var(--bio-emerald); fill: none; stroke-width: 2;" viewBox="0 0 24 24">
+              <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
+            </svg>
+            Ritmo Circadiano & Señal Solar Actual
+          </span>
+          <span style="font-size: 0.72rem; color: var(--bio-emerald); font-weight: 700;">Núcleo Supraquiasmático</span>
+        </div>
+
+        <div class="circadian-step-box" id="circadian-box">
+          <div class="circadian-phase-pill" id="circadian-phase-pill">
+            <span style="display: inline-block; width: 8px; height: 8px; background: currentColor; border-radius: 9999px;"></span>
+            <span id="circadian-tag">Cenit de Alerta Solar</span>
+          </div>
+          <div class="circadian-text-bold" id="circadian-title">Pico Metabólico y Cognitivo</div>
+          <p class="circadian-advice" id="circadian-desc">
+            Al mediodía solar el sol emite la mayor radiación UVB para sintetizar vitamina D sin quemar la piel. Es el momento biológico idóneo para la ingesta calórica más densa del día.
+          </p>
+        </div>
+
+        <p style="font-size: 0.84rem; color: var(--text-muted); line-height: 1.55;">
+          El cuerpo humano no lee números en una pantalla de cuarzo: lee **fotones en la retina**. Vivir según la hora solar real reduce el *jetlag social* y devuelve al cerebro su ritmo natural de melatonina y cortisol.
+        </p>
+      </div>
+    </section>
+
+    <!-- PIE DE PÁGINA -->
+    <footer class="app-footer">
+      <p>Solarium • 100% Autónomo & Offline • Reloj Solar Verdadero & Calendario Fijo Internacional</p>
+    </footer>
+
+  </div>
+
+  <!-- MODAL DE COORDENADAS PERSONALIZADAS -->
+  <div class="custom-location-modal" id="modal-coords">
+    <div class="modal-box">
+      <div class="modal-title">Configurar Coordenadas Geográficas</div>
+      <div class="modal-field">
+        <label for="input-lat">Latitud Decimal (-90 a 90)</label>
+        <input type="number" id="input-lat" step="0.0001" value="19.4326">
+      </div>
+      <div class="modal-field">
+        <label for="input-lon">Longitud Decimal (-180 a 180, Oeste negativo)</label>
+        <input type="number" id="input-lon" step="0.0001" value="-99.1332">
+      </div>
+      <div class="modal-field">
+        <label for="input-tz">Huso Horario / UTC Offset (Horas, ej. -6)</label>
+        <input type="number" id="input-tz" step="0.5" value="-6">
+      </div>
+      <div class="modal-actions">
+        <button class="btn-modal-cancel" id="btn-modal-cancel">Cancelar</button>
+        <button class="btn-modal-primary" id="btn-modal-save">Guardar Coordenadas</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==========================================================================
+       LÓGICA JAVASCRIPT ASTRONÓMICA Y CRONOBIOLÓGICA (ZERO DEPENDENCIES)
+       ========================================================================== */
+  <script>
+    (function () {
+      'use strict';
+
+      /* --------------------------------------------------------------------------
+         PRESETS DE CIUDADES GLOBALES
+         -------------------------------------------------------------------------- */
+      const CITIES = {
+        CDMX: { name: 'Ciudad de México', lat: 19.4326, lon: -99.1332, tz: -6 },
+        MADRID: { name: 'Madrid, España', lat: 40.4168, lon: -3.7038, tz: 1 },
+        BOGOTA: { name: 'Bogotá, Colombia', lat: 4.7110, lon: -74.0721, tz: -5 },
+        BUENOS_AIRES: { name: 'Buenos Aires, Argentina', lat: -34.6037, lon: -58.3816, tz: -3 },
+        SANTIAGO: { name: 'Santiago, Chile', lat: -33.4489, lon: -70.6693, tz: -3 },
+        NEW_YORK: { name: 'Nueva York, EE. UU.', lat: 40.7128, lon: -74.0060, tz: -4 },
+        LONDON: { name: 'Londres, Reino Unido', lat: 51.5074, lon: -0.1278, tz: 0 },
+        PARIS: { name: 'París, Francia', lat: 48.8566, lon: 2.3522, tz: 1 },
+        TOKYO: { name: 'Tokio, Japón', lat: 35.6762, lon: 139.6503, tz: 9 }
+      };
+
+      /* --------------------------------------------------------------------------
+         ESTADO DE LA APLICACIÓN
+         -------------------------------------------------------------------------- */
+      const state = {
+        lat: 19.4326,
+        lon: -99.1332,
+        tz: -6, // UTC offset en horas
+        selectedMonthFixed: 0 // 0 a 12 (13 meses)
+      };
+
+      // Recuperar de localStorage si existe
+      try {
+        const saved = localStorage.getItem('solarium_geo');
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          state.lat = parsed.lat;
+          state.lon = parsed.lon;
+          state.tz = parsed.tz;
+        } else {
+          // Detectar automáticamente el timezone local del sistema
+          const sysOffset = -new Date().getTimezoneOffset() / 60;
+          state.tz = sysOffset;
+        }
+      } catch (e) {
+        console.warn(e);
+      }
+
+      /* --------------------------------------------------------------------------
+         ELEMENTOS DOM
+         -------------------------------------------------------------------------- */
+      const dom = {
+        displaySolarTime: document.getElementById('display-solar-time'),
+        displayCivilTime: document.getElementById('display-civil-time'),
+        badgeSolarDiff: document.getElementById('badge-solar-diff'),
+        valSolarNoon: document.getElementById('val-solar-noon'),
+        valEot: document.getElementById('val-eot'),
+        valSolarAltitude: document.getElementById('val-solar-altitude'),
+        valDayPhase: document.getElementById('val-day-phase'),
+        valSunrise: document.getElementById('val-sunrise'),
+        valZenithTime: document.getElementById('val-zenith-time'),
+        valSunset: document.getElementById('val-sunset'),
+        badgeZenithInfo: document.getElementById('badge-zenith-info'),
+        skyCanvas: document.getElementById('sky-canvas'),
+        
+        selectCity: document.getElementById('select-city'),
+        btnGps: document.getElementById('btn-gps'),
+        btnCustomCoords: document.getElementById('btn-custom-coords'),
+        modalCoords: document.getElementById('modal-coords'),
+        inputLat: document.getElementById('input-lat'),
+        inputLon: document.getElementById('input-lon'),
+        inputTz: document.getElementById('input-tz'),
+        btnModalCancel: document.getElementById('btn-modal-cancel'),
+        btnModalSave: document.getElementById('btn-modal-save'),
+        
+        selectFixedMonth: document.getElementById('select-fixed-month'),
+        btnPrevMonth: document.getElementById('btn-prev-month'),
+        btnNextMonth: document.getElementById('btn-next-month'),
+        fixedCalendarTbody: document.getElementById('fixed-calendar-tbody'),
+        
+        moonRenderSvg: document.getElementById('moon-render-svg'),
+        lunarPhaseName: document.getElementById('lunar-phase-name'),
+        lunarPctTxt: document.getElementById('lunar-pct-txt'),
+        lunarAgeTxt: document.getElementById('lunar-age-txt'),
+        
+        circadianTag: document.getElementById('circadian-tag'),
+        circadianTitle: document.getElementById('circadian-title'),
+        circadianDesc: document.getElementById('circadian-desc'),
+        
+        weekCards: [
+          document.getElementById('week-card-1'),
+          document.getElementById('week-card-2'),
+          document.getElementById('week-card-3'),
+          document.getElementById('week-card-4')
+        ]
+      };
+
+      /* --------------------------------------------------------------------------
+         ASTRONOMÍA: ECUACIÓN DEL TIEMPO Y COORDENADAS SOLARES
+         Algoritmo NOAA / Spencer
+         -------------------------------------------------------------------------- */
+      function getDayOfYear(date) {
+        const start = new Date(date.getFullYear(), 0, 0);
+        const diff = date - start;
+        const oneDay = 1000 * 60 * 60 * 24;
+        return Math.floor(diff / oneDay);
+      }
+
+      function calculateSolarData(now = new Date()) {
+        const dayOfYear = getDayOfYear(now);
+        const hour = now.getHours() + now.getMinutes() / 60 + now.getSeconds() / 3600;
+
+        // Ángulo fraccional del año (en radianes)
+        const gamma = (2 * Math.PI / 365) * (dayOfYear - 1 + (hour - 12) / 24);
+
+        // Ecuación del Tiempo (EOT) en minutos
+        const eotMinutes = 229.18 * (
+          0.000075 +
+          0.001868 * Math.cos(gamma) -
+          0.032077 * Math.sin(gamma) -
+          0.014615 * Math.cos(2 * gamma) -
+          0.040849 * Math.sin(2 * gamma)
+        );
+
+        // Declinación Solar (en radianes)
+        const decl = 0.006918 -
+          0.399912 * Math.cos(gamma) +
+          0.070257 * Math.sin(gamma) -
+          0.006758 * Math.cos(2 * gamma) +
+          0.000907 * Math.sin(2 * gamma) -
+          0.002697 * Math.cos(3 * gamma) +
+          0.00148 * Math.sin(3 * gamma);
+
+        // Corrección por Longitud: 4 minutos por cada grado de diferencia con el meridiano de la zona
+        const stdMeridian = state.tz * 15; // en grados
+        const lonDiff = state.lon - stdMeridian;
+        const lonCorrectionMinutes = lonDiff * 4;
+
+        // Desfase total respecto al reloj civil
+        const totalOffsetMinutes = lonCorrectionMinutes + eotMinutes;
+
+        // Minutos civiles desde medianoche
+        const civilMinutes = now.getHours() * 60 + now.getMinutes() + now.getSeconds() / 60 + now.getMilliseconds() / 60000;
+
+        // Minutos solares verdaderos (LAST)
+        let solarMinutes = (civilMinutes + totalOffsetMinutes) % 1440;
+        if (solarMinutes < 0) solarMinutes += 1440;
+
+        const solH = Math.floor(solarMinutes / 60);
+        const solM = Math.floor(solarMinutes % 60);
+        const solS = Math.floor((solarMinutes * 60) % 60);
+
+        // Mediodía Solar en hora civil (cuando solarMinutes = 720)
+        let solarNoonCivilMinutes = (720 - totalOffsetMinutes) % 1440;
+        if (solarNoonCivilMinutes < 0) solarNoonCivilMinutes += 1440;
+        const noonH = Math.floor(solarNoonCivilMinutes / 60);
+        const noonM = Math.floor(solarNoonCivilMinutes % 60);
+        const noonS = Math.floor((solarNoonCivilMinutes * 60) % 60);
+
+        // Ángulo horario y Altitud del Sol
+        const latRad = state.lat * (Math.PI / 180);
+        const hourAngleRad = (solarMinutes / 4 - 180) * (Math.PI / 180); // 15° por hora desde el mediodía
+
+        const sinAltitude = Math.sin(latRad) * Math.sin(decl) + Math.cos(latRad) * Math.cos(decl) * Math.cos(hourAngleRad);
+        const altitudeDeg = Math.asin(Math.max(-1, Math.min(1, sinAltitude))) * (180 / Math.PI);
+
+        // Cálculo de Amanecer y Atardecer aproximados
+        const zenithAngleRad = 90.833 * (Math.PI / 180); // corrección de refracción atmosférica estándar
+        const cosHourAngleSunrise = (Math.cos(zenithAngleRad) - Math.sin(latRad) * Math.sin(decl)) / (Math.cos(latRad) * Math.cos(decl));
+
+        let sunriseMinutes = null;
+        let sunsetMinutes = null;
+        if (cosHourAngleSunrise >= -1 && cosHourAngleSunrise <= 1) {
+          const haDeg = Math.acos(cosHourAngleSunrise) * (180 / Math.PI);
+          const halfDayMin = haDeg * 4;
+          sunriseMinutes = (solarNoonCivilMinutes - halfDayMin + 1440) % 1440;
+          sunsetMinutes = (solarNoonCivilMinutes + halfDayMin + 1440) % 1440;
+        }
+
+        return {
+          now,
+          solH, solM, solS, solarMinutes,
+          civilMinutes,
+          totalOffsetMinutes,
+          eotMinutes,
+          noonH, noonM, noonS,
+          altitudeDeg,
+          sunriseMinutes,
+          sunsetMinutes
+        };
+      }
+
+      function pad2(n) {
+        return n.toString().padStart(2, '0');
+      }
+
+      function formatMinutesTo12h(totalMin) {
+        if (totalMin == null) return '--:--';
+        const h = Math.floor(totalMin / 60) % 24;
+        const m = Math.floor(totalMin % 60);
+        const period = h >= 12 ? 'PM' : 'AM';
+        const h12 = h % 12 || 12;
+        return `${pad2(h12)}:${pad2(m)} ${period}`;
+      }
+
+      /* --------------------------------------------------------------------------
+         CALENDARIO FIJO INTERNACIONAL DE 13 MESES DE 28 DÍAS
+         -------------------------------------------------------------------------- */
+      const FIXED_MONTHS = [
+        'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+        'Sol', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
+      ];
+
+      function isLeapYear(year) {
+        return (year % 4 === 0 && year % 100 !== 0) || (year % 400 === 0);
+      }
+
+      function getFixedDate(date = new Date()) {
+        const year = date.getFullYear();
+        const leap = isLeapYear(year);
+        const dayOfYear = getDayOfYear(date); // 1 a 365 o 366
+
+        // En año normal hay 365 días: 13 * 28 = 364 + 1 Día del Año (Year Day)
+        if (!leap) {
+          if (dayOfYear === 365) {
+            return {
+              isYearDay: true,
+              isLeapDay: false,
+              monthIndex: 12,
+              monthName: 'Día del Año (Year Day)',
+              dayOfMonth: 29,
+              weekdayName: 'Día Fuera del Tiempo',
+              weekInMonth: 4,
+              year
+            };
+          }
+        } else {
+          // En año bisiesto hay 366 días: Leap Day se inserta en Sol 29 (día 197)
+          if (dayOfYear === 197) {
+            return {
+              isYearDay: false,
+              isLeapDay: true,
+              monthIndex: 6,
+              monthName: 'Sol (Leap Day)',
+              dayOfMonth: 29,
+              weekdayName: 'Día Bisiesto Intercalar',
+              weekInMonth: 4,
+              year
+            };
+          }
+          if (dayOfYear === 366) {
+            return {
+              isYearDay: true,
+              isLeapDay: false,
+              monthIndex: 12,
+              monthName: 'Día del Año (Year Day)',
+              dayOfMonth: 29,
+              weekdayName: 'Día Fuera del Tiempo',
+              weekInMonth: 4,
+              year
+            };
+          }
+        }
+
+        // Días regulares de 1 a 364
+        let adjustedDay = dayOfYear;
+        if (leap && dayOfYear > 197) {
+          adjustedDay -= 1; // ajustar por el leap day pasado
+        }
+
+        const monthIndex = Math.min(12, Math.floor((adjustedDay - 1) / 28));
+        const dayOfMonth = ((adjustedDay - 1) % 28) + 1;
+        const weekInMonth = Math.ceil(dayOfMonth / 7); // 1 a 4
+
+        const weekdayNames = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+        const weekdayIndex = (dayOfMonth - 1) % 7;
+
+        return {
+          isYearDay: false,
+          isLeapDay: false,
+          monthIndex,
+          monthName: FIXED_MONTHS[monthIndex],
+          dayOfMonth,
+          weekdayName: weekdayNames[weekdayIndex],
+          weekdayIndex,
+          weekInMonth,
+          year
+        };
+      }
+
+      /* --------------------------------------------------------------------------
+         RENDERIZADO DEL CALENDARIO DE 28 DÍAS
+         -------------------------------------------------------------------------- */
+      function renderFixedCalendar() {
+        const today = new Date();
+        const currentFixed = getFixedDate(today);
+        const targetMonth = state.selectedMonthFixed;
+
+        let html = '';
+        for (let week = 1; week <= 4; week++) {
+          html += '<tr>';
+          for (let dayOfWeek = 0; dayOfWeek < 7; dayOfWeek++) {
+            const dayNum = (week - 1) * 7 + dayOfWeek + 1;
+            const isToday = (targetMonth === currentFixed.monthIndex && dayNum === currentFixed.dayOfMonth);
+
+            // Mapeo inverso a fecha gregoriana para la pequeña etiqueta
+            // Día del año = targetMonth * 28 + dayNum
+            const dayOfYear = targetMonth * 28 + dayNum;
+            const approxGregDate = new Date(today.getFullYear(), 0, dayOfYear);
+            const gregLabel = approxGregDate.toLocaleDateString('es-ES', { month: 'short', day: 'numeric' });
+
+            // Color del punto de fase biológica
+            let bioColor = '#38bdf8';
+            if (week === 2) bioColor = '#f59e0b';
+            if (week === 3) bioColor = '#10b981';
+            if (week === 4) bioColor = '#a855f7';
+
+            html += `
+              <td class="calendar-day-cell ${isToday ? 'is-today' : ''}" data-day="${dayNum}">
+                <span class="cell-num">${dayNum}</span>
+                <span class="cell-greg-sub">${gregLabel}</span>
+                <span class="cell-bio-phase" style="background: ${bioColor};"></span>
+              </td>
+            `;
+          }
+          html += '</tr>';
+        }
+
+        dom.fixedCalendarTbody.innerHTML = html;
+
+        // Actualizar badges de las 4 semanas
+        dom.weekCards.forEach((card, idx) => {
+          if (idx + 1 === currentFixed.weekInMonth && targetMonth === currentFixed.monthIndex) {
+            card.classList.add('active-week');
+          } else {
+            card.classList.remove('active-week');
+          }
+        });
+      }
+
+      /* --------------------------------------------------------------------------
+         ASTRONOMÍA LUNAR EN TIEMPO REAL
+         -------------------------------------------------------------------------- */
+      function calculateLunarPhase(date = new Date()) {
+        // Época de referencia: Luna Nueva exacta el 11 de enero de 2024 a las 11:57 UTC
+        const refEpoch = new Date(Date.UTC(2024, 0, 11, 11, 57, 0)).getTime();
+        const synodicMonthMs = 29.53058867 * 86400 * 1000;
+
+        const diffMs = date.getTime() - refEpoch;
+        const cycles = diffMs / synodicMonthMs;
+        const phaseFraction = cycles - Math.floor(cycles); // 0.0 a 1.0
+
+        const ageDays = phaseFraction * 29.53058867;
+        // Iluminación porcentual (0 a 100%)
+        const illuminationPct = (1 - Math.cos(phaseFraction * 2 * Math.PI)) / 2 * 100;
+
+        // Nombres de las 8 fases
+        let phaseName = 'Luna Nueva';
+        if (ageDays >= 1.84 && ageDays < 5.53) phaseName = 'Creciente Cóncava';
+        else if (ageDays >= 5.53 && ageDays < 9.22) phaseName = 'Cuarto Creciente';
+        else if (ageDays >= 9.22 && ageDays < 12.91) phaseName = 'Creciente Gibosa';
+        else if (ageDays >= 12.91 && ageDays < 16.61) phaseName = 'Luna Llena';
+        else if (ageDays >= 16.61 && ageDays < 20.30) phaseName = 'Menguante Gibosa';
+        else if (ageDays >= 20.30 && ageDays < 23.99) phaseName = 'Cuarto Menguante';
+        else if (ageDays >= 23.99 && ageDays < 27.68) phaseName = 'Menguante Cóncava';
+
+        return {
+          phaseFraction,
+          ageDays,
+          illuminationPct,
+          phaseName
+        };
+      }
+
+      function renderMoonSVG(phaseFraction) {
+        // Renderizado SVG de la esfera y sombra lunar
+        const r = 44;
+        const cx = 50, cy = 50;
+        const isWaxing = phaseFraction < 0.5;
+        const k = Math.cos(phaseFraction * 2 * Math.PI); // de 1 a -1
+
+        let d = '';
+        if (isWaxing) {
+          // Creciente (luz a la derecha en hemisferio norte)
+          const rx = Math.abs(k * r);
+          const sweep = k < 0 ? 1 : 0;
+          d = `M 50 6 A 44 44 0 0 1 50 94 A ${rx} 44 0 0 ${sweep} 50 6 Z`;
+        } else {
+          // Menguante (luz a la izquierda)
+          const rx = Math.abs(k * r);
+          const sweep = k < 0 ? 0 : 1;
+          d = `M 50 6 A 44 44 0 0 0 50 94 A ${rx} 44 0 0 ${sweep} 50 6 Z`;
+        }
+
+        dom.moonRenderSvg.innerHTML = `
+          <circle cx="50" cy="50" r="44" fill="#1e293b" stroke="rgba(148, 163, 184, 0.3)" stroke-width="2"/>
+          <path d="${d}" fill="#e2e8f0"/>
+          <circle cx="50" cy="50" r="44" fill="none" stroke="rgba(56, 189, 248, 0.4)" stroke-width="1.5"/>
+        `;
+      }
+
+      /* --------------------------------------------------------------------------
+         CANVAS DE LA BÓVEDA CELESTE (ARCO SOLAR)
+         -------------------------------------------------------------------------- */
+      function renderSkyVault(solarData) {
+        const cvs = dom.skyCanvas;
+        const ctx = cvs.getContext('2d');
+        const w = cvs.width;
+        const h = cvs.height;
+
+        ctx.clearRect(0, 0, w, h);
+
+        // Horizonte (línea a 3/4 de altura)
+        const horizonY = h - 25;
+        ctx.beginPath();
+        ctx.moveTo(15, horizonY);
+        ctx.lineTo(w - 15, horizonY);
+        ctx.strokeStyle = 'rgba(148, 163, 184, 0.3)';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        // Arco solar parabólico (desde amanecer a atardecer)
+        const startX = 30;
+        const endX = w - 30;
+        const apexY = 22; // Cenit
+        const apexX = w / 2;
+
+        ctx.beginPath();
+        ctx.moveTo(startX, horizonY);
+        ctx.quadraticCurveTo(apexX, apexY - 10, endX, horizonY);
+        ctx.strokeStyle = 'rgba(245, 158, 11, 0.35)';
+        ctx.setLineDash([4, 4]);
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        // Marca del Cenit (Mediodía Solar 12:00)
+        ctx.fillStyle = '#f59e0b';
+        ctx.beginPath();
+        ctx.arc(apexX, apexY, 3, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Posición actual del Sol según los minutos solares
+        // 06:00 (360m) = startX, 12:00 (720m) = apexX, 18:00 (1080m) = endX
+        const sm = solarData.solarMinutes;
+        const isDay = sm >= 360 && sm <= 1080;
+
+        let sunX = apexX;
+        let sunY = apexY;
+
+        if (isDay) {
+          const t = (sm - 360) / 720; // 0.0 a 1.0
+          // Interpolación en curva cuadrática de Bézier
+          sunX = Math.pow(1 - t, 2) * startX + 2 * (1 - t) * t * apexX + Math.pow(t, 2) * endX;
+          sunY = Math.pow(1 - t, 2) * horizonY + 2 * (1 - t) * t * (apexY - 10) + Math.pow(t, 2) * horizonY;
+
+          // Resplandor del Sol
+          const grad = ctx.createRadialGradient(sunX, sunY, 2, sunX, sunY, 18);
+          grad.addColorStop(0, 'rgba(245, 158, 11, 1)');
+          grad.addColorStop(0.5, 'rgba(245, 158, 11, 0.4)');
+          grad.addColorStop(1, 'rgba(245, 158, 11, 0)');
+          ctx.fillStyle = grad;
+          ctx.beginPath();
+          ctx.arc(sunX, sunY, 18, 0, Math.PI * 2);
+          ctx.fill();
+
+          // Núcleo del Sol
+          ctx.fillStyle = '#fff';
+          ctx.beginPath();
+          ctx.arc(sunX, sunY, 5, 0, Math.PI * 2);
+          ctx.fill();
+        } else {
+          // Posición nocturna por debajo del horizonte
+          ctx.fillStyle = 'rgba(56, 189, 248, 0.5)';
+          ctx.font = '10px ui-monospace, monospace';
+          ctx.fillText('NOCHE (Sol bajo el horizonte)', apexX - 75, horizonY + 18);
+        }
+      }
+
+      /* --------------------------------------------------------------------------
+         ACTUALIZACIÓN CONTINUA EN TIEMPO REAL
+         -------------------------------------------------------------------------- */
+      function updateApp() {
+        const now = new Date();
+        const solar = calculateSolarData(now);
+
+        // Actualizar reloj solar principal
+        dom.displaySolarTime.innerHTML = `${pad2(solar.solH)}:${pad2(solar.solM)}<span class="sec-unit">:${pad2(solar.solS)}</span>`;
+
+        // Hora civil estándar
+        dom.displayCivilTime.textContent = `${pad2(now.getHours())}:${pad2(now.getMinutes())}:${pad2(now.getSeconds())}`;
+
+        // Desfase solar
+        const sign = solar.totalOffsetMinutes >= 0 ? '+' : '-';
+        const absDiff = Math.abs(solar.totalOffsetMinutes);
+        const diffM = Math.floor(absDiff);
+        const diffS = Math.floor((absDiff * 60) % 60);
+        dom.badgeSolarDiff.textContent = `Desfase: ${sign}${pad2(diffM)}m ${pad2(diffS)}s`;
+
+        // Mediodía Solar y métricas
+        const noonPeriod = solar.noonH >= 12 ? 'PM' : 'AM';
+        const noonH12 = solar.noonH % 12 || 12;
+        dom.valSolarNoon.textContent = `${pad2(noonH12)}:${pad2(solar.noonM)}:${pad2(solar.noonS)} ${noonPeriod}`;
+
+        dom.valEot.textContent = `${solar.eotMinutes >= 0 ? '+' : ''}${solar.eotMinutes.toFixed(1)} min`;
+        dom.valSolarAltitude.textContent = `${solar.altitudeDeg.toFixed(1)}°`;
+
+        const isSunUp = solar.altitudeDeg > 0;
+        dom.valDayPhase.textContent = isSunUp ? 'Día Solar' : 'Noche';
+        dom.valDayPhase.style.color = isSunUp ? 'var(--solar-gold)' : 'var(--lunar-blue)';
+
+        // Tiempos del pie de la bóveda
+        dom.valSunrise.textContent = formatMinutesTo12h(solar.sunriseMinutes);
+        dom.valZenithTime.textContent = `${pad2(noonH12)}:${pad2(solar.noonM)} ${noonPeriod}`;
+        dom.valSunset.textContent = formatMinutesTo12h(solar.sunsetMinutes);
+
+        // Bóveda celeste en Canvas
+        renderSkyVault(solar);
+
+        // Luna
+        const moon = calculateLunarPhase(now);
+        dom.lunarPhaseName.textContent = moon.phaseName;
+        dom.lunarPctTxt.textContent = `${moon.illuminationPct.toFixed(1)}% Iluminación`;
+        dom.lunarAgeTxt.textContent = `Día ${moon.ageDays.toFixed(1)} de 29.5 del ciclo sinódico`;
+        renderMoonSVG(moon.phaseFraction);
+
+        // Cronobiología según la hora solar
+        updateCircadianAdvice(solar.solarMinutes);
+
+        requestAnimationFrame(updateApp);
+      }
+
+      function updateCircadianAdvice(solarMinutes) {
+        // 06:00 a 08:30 (360 a 510m)
+        if (solarMinutes >= 360 && solarMinutes < 510) {
+          dom.circadianTag.textContent = 'Amanecer Solar: Activación';
+          dom.circadianTitle.textContent = 'Exposición a Luz Azul Natural & Cortisol';
+          dom.circadianDesc.textContent = 'Los fotones matutinos en la retina detienen la melatonina y activan el cortisol saludable. Ideal para paseos al aire libre e hidratación profunda.';
+        } else if (solarMinutes >= 510 && solarMinutes < 720) {
+          dom.circadianTag.textContent = 'Mañana Solar: Alerta Máxima';
+          dom.circadianTitle.textContent = 'Pico de Enfoque y Trabajo Intelectual';
+          dom.circadianDesc.textContent = 'El cerebro alcanza su mayor velocidad de procesamiento y memoria de trabajo. Momento óptimo para resolver problemas difíciles y tareas analíticas.';
+        } else if (solarMinutes >= 720 && solarMinutes < 870) {
+          dom.circadianTag.textContent = 'Cenit Solar (12:00 LAST)';
+          dom.circadianTitle.textContent = 'Pico Metabólico y Síntesis de Vitamina D';
+          dom.circadianDesc.textContent = 'El sol alcanza su altura máxima diaria. Es el momento biológico idóneo para la comida principal y la digestión sin pesadez estomacal.';
+        } else if (solarMinutes >= 870 && solarMinutes < 1080) {
+          dom.circadianTag.textContent = 'Tarde Solar: Coordinación';
+          dom.circadianTitle.textContent = 'Máxima Fuerza Muscular y Eficiencia';
+          dom.circadianDesc.textContent = 'La temperatura corporal y la flexibilidad vascular tocan techo. El mejor horario para entrenamiento de fuerza y deporte intenso.';
+        } else if (solarMinutes >= 1080 && solarMinutes < 1320) {
+          dom.circadianTag.textContent = 'Ocaso: Preparación Nocturna';
+          dom.circadianTitle.textContent = 'Glándula Pineal & Relajación';
+          dom.circadianDesc.textContent = 'Al ocultarse el sol, el cerebro inicia la secreción de melatonina. Conviene atenuar luces artificiales, evitar pantallas brillantes y cenar ligero.';
+        } else {
+          dom.circadianTag.textContent = 'Noche Profunda: Reparación Celular';
+          dom.circadianTitle.textContent = 'Sueño Delta & Regeneración Inmune';
+          dom.circadianDesc.textContent = 'Pico de hormona de crecimiento y limpieza glinfática cerebral. El cuerpo se desintoxica y consolida la memoria de la jornada.';
+        }
+      }
+
+      /* --------------------------------------------------------------------------
+         EVENTOS Y CONTROLES
+         -------------------------------------------------------------------------- */
+      // Selector de ciudad preconfigurada
+      dom.selectCity.addEventListener('change', (e) => {
+        const cityKey = e.target.value;
+        if (CITIES[cityKey]) {
+          const c = CITIES[cityKey];
+          state.lat = c.lat;
+          state.lon = c.lon;
+          state.tz = c.tz;
+          saveGeoState();
+        }
+      });
+
+      // Geolocalización GPS
+      dom.btnGps.addEventListener('click', () => {
+        if ('geolocation' in navigator) {
+          dom.btnGps.classList.add('active');
+          navigator.geolocation.getCurrentPosition(
+            (pos) => {
+              state.lat = pos.coords.latitude;
+              state.lon = pos.coords.longitude;
+              state.tz = -new Date().getTimezoneOffset() / 60;
+              saveGeoState();
+              dom.btnGps.classList.remove('active');
+              alert(`Ubicación GPS sincronizada:\nLat: ${state.lat.toFixed(4)}°, Lon: ${state.lon.toFixed(4)}°`);
+            },
+            (err) => {
+              dom.btnGps.classList.remove('active');
+              alert('No se pudo acceder al GPS. Puedes ingresar las coordenadas manualmente en el botón Coordenadas.');
+            }
+          );
+        }
+      });
+
+      // Modal de coordenadas manuales
+      dom.btnCustomCoords.addEventListener('click', () => {
+        dom.inputLat.value = state.lat;
+        dom.inputLon.value = state.lon;
+        dom.inputTz.value = state.tz;
+        dom.modalCoords.classList.add('open');
+      });
+
+      dom.btnModalCancel.addEventListener('click', () => {
+        dom.modalCoords.classList.remove('open');
+      });
+
+      dom.btnModalSave.addEventListener('click', () => {
+        state.lat = parseFloat(dom.inputLat.value) || 0;
+        state.lon = parseFloat(dom.inputLon.value) || 0;
+        state.tz = parseFloat(dom.inputTz.value) || 0;
+        saveGeoState();
+        dom.modalCoords.classList.remove('open');
+      });
+
+      function saveGeoState() {
+        try {
+          localStorage.setItem('solarium_geo', JSON.stringify({
+            lat: state.lat,
+            lon: state.lon,
+            tz: state.tz
+          }));
+        } catch (e) {}
+      }
+
+      // Navegación de meses del Calendario Fijo
+      dom.selectFixedMonth.addEventListener('change', (e) => {
+        state.selectedMonthFixed = parseInt(e.target.value, 10);
+        renderFixedCalendar();
+      });
+
+      dom.btnPrevMonth.addEventListener('click', () => {
+        state.selectedMonthFixed = (state.selectedMonthFixed - 1 + 13) % 13;
+        dom.selectFixedMonth.value = state.selectedMonthFixed;
+        renderFixedCalendar();
+      });
+
+      dom.btnNextMonth.addEventListener('click', () => {
+        state.selectedMonthFixed = (state.selectedMonthFixed + 1) % 13;
+        dom.selectFixedMonth.value = state.selectedMonthFixed;
+        renderFixedCalendar();
+      });
+
+      /* --------------------------------------------------------------------------
+         ARRANQUE INICIAL
+         -------------------------------------------------------------------------- */
+      const initialFixed = getFixedDate(new Date());
+      state.selectedMonthFixed = initialFixed.monthIndex;
+      dom.selectFixedMonth.value = state.selectedMonthFixed;
+
+      renderFixedCalendar();
+      requestAnimationFrame(updateApp);
+    })();
+  </script>
+</body>
+</html>

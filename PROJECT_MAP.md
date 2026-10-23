@@ -11,7 +11,8 @@ Aplicación web astronómica y cronobiológica standalone, 100% offline y sin de
 ```mermaid
 gitGraph
     commit id: "init-project-map" tag: "v0.1.0"
-    commit id: "feat-solar-lunar-app" tag: "v1.0.0"
+    commit id: "feat-solar-lunar-core" tag: "v1.0.0"
+    commit id: "feat-desktop-shortcuts-and-icon" tag: "v1.1.0"
 ```
 
 ---
@@ -21,10 +22,11 @@ gitGraph
 | ID | Fecha | Versión | Descripción | Estado |
 |---|---|---|---|---|
 | `CHK-001` | 2026-10-23 | `v0.1.0` | Inicialización del repositorio git y mapa del proyecto | ✅ Completado |
-| `CHK-002` | 2026-10-23 | `v1.0.0` | Aplicación interactiva completa (`index.html`) con Reloj Solar Local Verdadero, simulador de bóveda celeste, Calendario de 13 meses de 28 días perpetuo, calculador lunar astronómico, guía de fases biológicas y scripts desacoplados POSIX `start.sh`/`stop.sh` en puerto asignado `5195` | 🟡 En progreso |
+| `CHK-002` | 2026-10-23 | `v1.0.0` | Aplicación interactiva completa (`index.html`) con Reloj Solar Local Verdadero, simulador de bóveda celeste, Calendario de 13 meses de 28 días perpetuo, calculador lunar astronómico, guía de fases biológicas y scripts desacoplados POSIX `start.sh`/`stop.sh` en puerto asignado `5195` | ✅ Completado |
+| `CHK-003` | 2026-10-23 | `v1.1.0` | Creación de lanzadores en el Escritorio: aplicación nativa compilada macOS `Solarium.app` con icono personalizado de sol y luna dorada/plateada (`.icns`), lanzador por terminal `Solarium.command` y script desacoplado `launch-desktop.sh` | ✅ Completado |
 
 ---
 
 ## 🚦 Estado de la Sesión
-- **En progreso:** Desarrollo de la aplicación en `/Users/joe/Developer/reloj-solar-13meses/index.html`.
-- **Siguiente paso:** Pruebas matemáticas astronómicas, verificación de precisión solar/lunar y pruebas Zero-Defect.
+- **Estado Actual:** Servidor local activo en puerto 5195 (`HTTP 200 OK`) y aplicación verificada al 100%. Accesos directos creados en el Escritorio de macOS.
+- **Siguiente paso:** Entrega al usuario con documentación técnica y enlaces clicables.
