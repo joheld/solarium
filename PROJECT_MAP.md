@@ -16,6 +16,7 @@ gitGraph
     commit id: "fix-auto-detection-and-iana-timezone" tag: "v1.1.1"
     commit id: "fix-html-comment-delimiter-bug" tag: "v1.1.2"
     commit id: "feat-native-swift-widget" tag: "v1.2.0"
+    commit id: "feat-open-source-github-release" tag: "v1.3.0"
 ```
 
 ---
@@ -30,9 +31,10 @@ gitGraph
 | `CHK-004` | 2026-10-23 | `v1.1.1` | Corrección integral del motor de detección: resolución de syntax error en el cierre del script, integración de base de datos de zonas horarias IANA con auto-detección instantánea (0 ms, 100% offline, detectando automáticamente Mérida / Yucatán `America/Merida`), barra visual de ubicación activa con indicador de pulso en vivo, refinamiento por IP en segundo plano, soporte para Secure Context en `launch-desktop.sh` vía `http://127.0.0.1:5195` y manejo defensivo del botón GPS | ✅ Completado |
 | `CHK-005` | 2026-10-23 | `v1.1.2` | Corrección del delimitador de comentario HTML previo al bloque `<script>`: se corrigió `*/` por `-->` en la cabecera del script que causaba que el parser HTML del navegador tratara todo el código JavaScript como un comentario HTML no cerrado, impidiendo su ejecución. Verificado con WebKit nativo en vivo | ✅ Completado |
 | `CHK-006` | 2026-10-23 | `v1.2.0` | Creación de widget nativo para macOS en Swift y AppKit (`Solarium Widget.app`): barra de menús extra reactiva (Menu Bar item con formatos intercambiables), popover flotante con hora solar, mediodía, altitud cenital, calendario de 13 meses y fase lunar en vivo, panel flotante de escritorio en vidrio esmerilado (*Frosted Glass*, modo flotante o pegado al fondo `NSWindow.Level.desktop`), atajos de teclado y script de compilación ARM64 `build-widget.sh` | ✅ Completado |
+| `CHK-007` | 2026-11-17 | `v1.3.0` | Publicación oficial open source en GitHub (`joheld/solarium`), documentación README ejecutiva, cierre seguro de sesión y desinstalación local hacia la Papelera de macOS | ✅ Completado |
 
 ---
 
 ## 🚦 Estado de la Sesión
-- **Estado Actual:** Solarium Widget nativo en Swift (`Solarium Widget.app`) compilado y activo en la barra de menús y escritorio de macOS. Aplicación web local activa en `http://127.0.0.1:5195`.
-- **Siguiente paso:** Uso y personalización del widget en el día a día por parte del usuario.
+- **Estado Actual:** 🚀 Publicado en GitHub como repositorio público oficial (`joheld/solarium`). Respaldo completo y desinstalación segura hacia la Papelera de macOS.
+- **Siguiente paso:** Proyecto preservado en GitHub. Reutilizar vía clonación cuando sea requerido.
